@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2015-2018 FIRST. All Rights Reserved.                        */
+/* Copyright (c) 2015-2019 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -11,10 +11,11 @@
 
 #include "frc/DriverStation.h"
 #include "frc/Timer.h"
+#include "frc/smartdashboard/SendableRegistry.h"
 
 using namespace frc;
 
-static constexpr double kSamplePeriod = 0.0005;
+static constexpr auto kSamplePeriod = 0.0005_s;
 static constexpr double kCalibrationSampleTime = 5.0;
 static constexpr double kDegreePerSecondPerLSB = 0.0125;
 
@@ -49,7 +50,8 @@ ADXRS450_Gyro::ADXRS450_Gyro(SPI::Port port) : m_spi(port) {
   Calibrate();
 
   HAL_Report(HALUsageReporting::kResourceType_ADXRS450, port);
-  SetName("ADXRS450_Gyro", port);
+
+  SendableRegistry::GetInstance().AddLW(this, "ADXRS450_Gyro", port);
 }
 
 static bool CalcParity(int v) {

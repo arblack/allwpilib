@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
+/* Copyright (c) 2017-2019 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -12,8 +12,11 @@ import java.util.StringJoiner;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.wpilibj.Sendable;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
+import edu.wpi.first.wpilibj.smartdashboard.SendableRegistry;
+import edu.wpi.first.wpiutil.math.MathUtils;
 
 /**
  * A class for driving Killough drive platforms.
@@ -39,7 +42,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
  * points down. Rotations follow the right-hand rule, so clockwise rotation around the Z axis is
  * positive.
  */
-public class KilloughDrive extends RobotDriveBase {
+public class KilloughDrive extends RobotDriveBase implements Sendable {
   public static final double kDefaultLeftMotorAngle = 60.0;
   public static final double kDefaultRightMotorAngle = 120.0;
   public static final double kDefaultBackMotorAngle = 270.0;
@@ -99,11 +102,11 @@ public class KilloughDrive extends RobotDriveBase {
                               Math.sin(rightMotorAngle * (Math.PI / 180.0)));
     m_backVec = new Vector2d(Math.cos(backMotorAngle * (Math.PI / 180.0)),
                              Math.sin(backMotorAngle * (Math.PI / 180.0)));
-    addChild(m_leftMotor);
-    addChild(m_rightMotor);
-    addChild(m_backMotor);
+    SendableRegistry.addChild(this, m_leftMotor);
+    SendableRegistry.addChild(this, m_rightMotor);
+    SendableRegistry.addChild(this, m_backMotor);
     instances++;
-    setName("KilloughDrive", instances);
+    SendableRegistry.addLW(this, "KilloughDrive", instances);
   }
 
   /**
@@ -171,10 +174,10 @@ public class KilloughDrive extends RobotDriveBase {
       m_reported = true;
     }
 
-    ySpeed = limit(ySpeed);
+    ySpeed = MathUtils.clamp(ySpeed, -1.0, 1.0);
     ySpeed = applyDeadband(ySpeed, m_deadband);
 
-    xSpeed = limit(xSpeed);
+    xSpeed = MathUtils.clamp(xSpeed, -1.0, 1.0);
     xSpeed = applyDeadband(xSpeed, m_deadband);
 
     // Compensate for gyro angle.

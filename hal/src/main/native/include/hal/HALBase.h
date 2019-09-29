@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2018 FIRST. All Rights Reserved.                        */
+/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -87,8 +87,6 @@ HAL_Bool HAL_GetBrownedOut(int32_t* status);
  */
 void HAL_BaseInitialize(int32_t* status);
 
-#ifndef HAL_USE_LABVIEW
-
 /**
  * Gets a port handle for a specific channel.
  *
@@ -175,7 +173,6 @@ int64_t HAL_Report(int32_t resource, int32_t instanceNumber, int32_t context,
                    const char* feature);
 #endif
 
-#endif  // HAL_USE_LABVIEW
 #ifdef __cplusplus
 }  // extern "C"
 #endif
