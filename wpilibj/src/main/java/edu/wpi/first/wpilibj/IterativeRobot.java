@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.wpilibj;
 
@@ -25,22 +22,23 @@ import edu.wpi.first.hal.HAL;
 @Deprecated
 public class IterativeRobot extends IterativeRobotBase {
   private static final double kPacketPeriod = 0.02;
+  private volatile boolean m_exit;
 
-  /**
-   * Create a new IterativeRobot.
-   */
+  /** Create a new IterativeRobot. */
   public IterativeRobot() {
     super(kPacketPeriod);
 
     HAL.report(tResourceType.kResourceType_Framework, tInstances.kFramework_Iterative);
   }
 
-  /**
-   * Provide an alternate "main loop" via startCompetition().
-   */
+  /** Provide an alternate "main loop" via startCompetition(). */
   @Override
   public void startCompetition() {
     robotInit();
+
+    if (isSimulation()) {
+      simulationInit();
+    }
 
     // Tell the DS that the robot is ready to be enabled
     HAL.observeUserProgramStarting();
@@ -49,8 +47,18 @@ public class IterativeRobot extends IterativeRobotBase {
     while (!Thread.currentThread().isInterrupted()) {
       // Wait for new data to arrive
       m_ds.waitForData();
+      if (m_exit) {
+        break;
+      }
 
       loopFunc();
     }
+  }
+
+  /** Ends the main loop in startCompetition(). */
+  @Override
+  public void endCompetition() {
+    m_exit = true;
+    m_ds.wakeupWaitForData();
   }
 }

@@ -1,21 +1,20 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #pragma once
 
 #include <memory>
 #include <string>
 
+#include <networktables/NetworkTable.h>
 #include <wpi/STLExtras.h>
 #include <wpi/Twine.h>
 
 namespace frc {
 
 class Sendable;
+class SendableBuilderImpl;
 
 /**
  * The SendableRegistry class is the public interface for registering sensors
@@ -25,6 +24,8 @@ class SendableRegistry {
  public:
   SendableRegistry(const SendableRegistry&) = delete;
   SendableRegistry& operator=(const SendableRegistry&) = delete;
+
+  using UID = size_t;
 
   /**
    * Gets an instance of the SendableRegistry class.
@@ -113,6 +114,15 @@ class SendableRegistry {
    */
   void AddLW(Sendable* sendable, const wpi::Twine& subsystem,
              const wpi::Twine& name);
+
+  /**
+   * Adds a child object to an object.  Adds the child object to the registry
+   * if it's not already present.
+   *
+   * @param parent parent object
+   * @param child child object
+   */
+  void AddChild(Sendable* parent, Sendable* child);
 
   /**
    * Adds a child object to an object.  Adds the child object to the registry
@@ -253,6 +263,60 @@ class SendableRegistry {
   void DisableLiveWindow(Sendable* sendable);
 
   /**
+   * Get unique id for an object.  Since objects can move, use this instead
+   * of storing Sendable* directly if ownership is in question.
+   *
+   * @param sendable object
+   * @return unique id
+   */
+  UID GetUniqueId(Sendable* sendable);
+
+  /**
+   * Get sendable object for a given unique id.
+   *
+   * @param uid unique id
+   * @return sendable object (may be null)
+   */
+  Sendable* GetSendable(UID uid);
+
+  /**
+   * Publishes an object in the registry to a network table.
+   *
+   * @param sendableUid sendable unique id
+   * @param table network table
+   */
+  void Publish(UID sendableUid, std::shared_ptr<NetworkTable> table);
+
+  /**
+   * Updates network table information from an object.
+   *
+   * @param sendableUid sendable unique id
+   */
+  void Update(UID sendableUid);
+
+  /**
+   * Data passed to ForeachLiveWindow() callback function
+   */
+  struct CallbackData {
+    CallbackData(Sendable* sendable_, wpi::StringRef name_,
+                 wpi::StringRef subsystem_, Sendable* parent_,
+                 std::shared_ptr<void>& data_, SendableBuilderImpl& builder_)
+        : sendable(sendable_),
+          name(name_),
+          subsystem(subsystem_),
+          parent(parent_),
+          data(data_),
+          builder(builder_) {}
+
+    Sendable* sendable;
+    wpi::StringRef name;
+    wpi::StringRef subsystem;
+    Sendable* parent;
+    std::shared_ptr<void>& data;
+    SendableBuilderImpl& builder;
+  };
+
+  /**
    * Iterates over LiveWindow-enabled objects in the registry.
    * It is *not* safe to call other SendableRegistry functions from the
    * callback (this will likely deadlock).
@@ -262,10 +326,7 @@ class SendableRegistry {
    */
   void ForeachLiveWindow(
       int dataHandle,
-      wpi::function_ref<void(Sendable* sendable, wpi::StringRef name,
-                             wpi::StringRef subsystem, Sendable* parent,
-                             std::shared_ptr<void>& data)>
-          callback) const;
+      wpi::function_ref<void(CallbackData& cbdata)> callback) const;
 
  private:
   SendableRegistry();

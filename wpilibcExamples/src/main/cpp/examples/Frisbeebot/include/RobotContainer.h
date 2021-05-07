@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #pragma once
 
@@ -63,7 +60,7 @@ class RobotContainer {
           // speed)
           .WithTimeout(ac::kAutoTimeoutSeconds)
           // When the command ends, turn off the shooter and the feeder
-          .WhenFinished([this] {
+          .AndThen([this] {
             m_shooter.Disable();
             m_shooter.StopFeeder();
           });
@@ -90,7 +87,7 @@ class RobotContainer {
   frc2::InstantCommand m_stopFeeder{[this] { m_shooter.StopFeeder(); },
                                     {&m_shooter}};
 
-  frc2::InstantCommand m_driveHalfSpeed{[this] { m_drive.SetMaxOutput(.5); },
+  frc2::InstantCommand m_driveHalfSpeed{[this] { m_drive.SetMaxOutput(0.5); },
                                         {}};
   frc2::InstantCommand m_driveFullSpeed{[this] { m_drive.SetMaxOutput(1); },
                                         {}};

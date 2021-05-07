@@ -1,16 +1,13 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2018-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #pragma once
 
 #include <functional>
 #include <limits>
 
-#include <units/units.h>
+#include <units/time.h>
 
 #include "frc/smartdashboard/Sendable.h"
 #include "frc/smartdashboard/SendableHelper.h"
@@ -30,7 +27,7 @@ class PIDController : public frc::Sendable,
    * @param Ki     The integral coefficient.
    * @param Kd     The derivative coefficient.
    * @param period The period between controller updates in seconds. The
-   *               default is 20 milliseconds.
+   *               default is 20 milliseconds. Must be non-zero and positive.
    */
   PIDController(double Kp, double Ki, double Kd,
                 units::second_t period = 20_ms);
@@ -117,7 +114,7 @@ class PIDController : public frc::Sendable,
   double GetSetpoint() const;
 
   /**
-   * Returns true if the error is within the tolerance of the error.
+   * Returns true if the error is within the tolerance of the setpoint.
    *
    * This will return false until at least one input value has been computed.
    */
@@ -139,6 +136,11 @@ class PIDController : public frc::Sendable,
    * Disables continuous input.
    */
   void DisableContinuousInput();
+
+  /**
+   * Returns true if continuous input is enabled.
+   */
+  bool IsContinuousInputEnabled() const;
 
   /**
    * Sets the minimum and maximum values for the integrator.
@@ -193,16 +195,6 @@ class PIDController : public frc::Sendable,
 
   void InitSendable(frc::SendableBuilder& builder) override;
 
- protected:
-  /**
-   * Wraps error around for continuous inputs. The original error is returned if
-   * continuous mode is disabled.
-   *
-   * @param error The current error of the PID controller.
-   * @return Error for continuous inputs.
-   */
-  double GetContinuousError(double error) const;
-
  private:
   // Factor for "proportional" control
   double m_Kp;
@@ -220,14 +212,9 @@ class PIDController : public frc::Sendable,
 
   double m_minimumIntegral = -1.0;
 
-  // Maximum input - limit setpoint to this
   double m_maximumInput = 0;
 
-  // Minimum input - limit setpoint to this
   double m_minimumInput = 0;
-
-  // Input range - difference between maximum and minimum
-  double m_inputRange = 0;
 
   // Do the endpoints wrap around? eg. Absolute encoder
   bool m_continuous = false;
@@ -248,14 +235,7 @@ class PIDController : public frc::Sendable,
   double m_velocityTolerance = std::numeric_limits<double>::infinity();
 
   double m_setpoint = 0;
-
-  /**
-   * Sets the minimum and maximum values expected from the input.
-   *
-   * @param minimumInput The minimum value expected from the input.
-   * @param maximumInput The maximum value expected from the input.
-   */
-  void SetInputRange(double minimumInput, double maximumInput);
+  double m_measurement = 0;
 };
 
 }  // namespace frc2

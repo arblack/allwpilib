@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #pragma once
 
@@ -19,6 +16,7 @@
 namespace frc {
 
 class AnalogInput;
+class DutyCycle;
 class SendableBuilder;
 
 class AnalogTrigger : public ErrorBase,
@@ -45,6 +43,13 @@ class AnalogTrigger : public ErrorBase,
    */
   explicit AnalogTrigger(AnalogInput* channel);
 
+  /**
+   * Construct an analog trigger given a duty cycle input.
+   *
+   * @param channel The pointer to the existing DutyCycle object
+   */
+  explicit AnalogTrigger(DutyCycle* dutyCycle);
+
   ~AnalogTrigger() override;
 
   AnalogTrigger(AnalogTrigger&& rhs);
@@ -59,6 +64,16 @@ class AnalogTrigger : public ErrorBase,
    * @param upper The upper limit of the trigger in Volts.
    */
   void SetLimitsVoltage(double lower, double upper);
+
+  /**
+   * Set the upper and lower duty cycle limits of the analog trigger.
+   *
+   * The limits are given as floating point values between 0 and 1.
+   *
+   * @param lower The lower limit of the trigger in percentage.
+   * @param upper The upper limit of the trigger in percentage.
+   */
+  void SetLimitsDutyCycle(double lower, double upper);
 
   /**
    * Set the upper and lower limits of the analog trigger.
@@ -139,9 +154,9 @@ class AnalogTrigger : public ErrorBase,
   void InitSendable(SendableBuilder& builder) override;
 
  private:
-  int m_index;
   hal::Handle<HAL_AnalogTriggerHandle> m_trigger;
   AnalogInput* m_analogInput = nullptr;
+  DutyCycle* m_dutyCycle = nullptr;
   bool m_ownsAnalog = false;
 };
 

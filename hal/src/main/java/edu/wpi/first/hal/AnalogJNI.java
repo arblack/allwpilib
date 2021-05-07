@@ -1,34 +1,22 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2016-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.hal;
 
-import java.nio.IntBuffer;
-
 public class AnalogJNI extends JNIWrapper {
   /**
-   * <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:58</i><br> enum values
+   * <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:58</i><br>
+   * enum values
    */
   public interface AnalogTriggerType {
-    /**
-     * <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:54</i>
-     */
+    /** <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:54</i> */
     int kInWindow = 0;
-    /**
-     * <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:55</i>
-     */
+    /** <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:55</i> */
     int kState = 1;
-    /**
-     * <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:56</i>
-     */
+    /** <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:56</i> */
     int kRisingPulse = 2;
-    /**
-     * <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:57</i>
-     */
+    /** <i>native declaration : AthenaJava\target\native\include\HAL\Analog.h:57</i> */
     int kFallingPulse = 3;
   }
 
@@ -45,6 +33,8 @@ public class AnalogJNI extends JNIWrapper {
   public static native boolean checkAnalogInputChannel(int channel);
 
   public static native boolean checkAnalogOutputChannel(int channel);
+
+  public static native void setAnalogInputSimDevice(int handle, int device);
 
   public static native void setAnalogOutput(int portHandle, double voltage);
 
@@ -92,25 +82,33 @@ public class AnalogJNI extends JNIWrapper {
 
   public static native void getAccumulatorOutput(int analogPortHandle, AccumulatorResult result);
 
-  public static native int initializeAnalogTrigger(int analogInputHandle, IntBuffer index);
+  public static native int initializeAnalogTrigger(int analogInputHandle);
+
+  public static native int initializeAnalogTriggerDutyCycle(int dutyCycleHandle);
 
   public static native void cleanAnalogTrigger(int analogTriggerHandle);
 
-  public static native void setAnalogTriggerLimitsRaw(int analogTriggerHandle, int lower,
-                                                      int upper);
+  public static native void setAnalogTriggerLimitsRaw(
+      int analogTriggerHandle, int lower, int upper);
 
-  public static native void setAnalogTriggerLimitsVoltage(int analogTriggerHandle,
-                                                          double lower, double upper);
+  public static native void setAnalogTriggerLimitsDutyCycle(
+      int analogTriggerHandle, double lower, double higher);
 
-  public static native void setAnalogTriggerAveraged(int analogTriggerHandle,
-                                                     boolean useAveragedValue);
+  public static native void setAnalogTriggerLimitsVoltage(
+      int analogTriggerHandle, double lower, double upper);
 
-  public static native void setAnalogTriggerFiltered(int analogTriggerHandle,
-                                                     boolean useFilteredValue);
+  public static native void setAnalogTriggerAveraged(
+      int analogTriggerHandle, boolean useAveragedValue);
+
+  public static native void setAnalogTriggerFiltered(
+      int analogTriggerHandle, boolean useFilteredValue);
 
   public static native boolean getAnalogTriggerInWindow(int analogTriggerHandle);
 
   public static native boolean getAnalogTriggerTriggerState(int analogTriggerHandle);
 
   public static native boolean getAnalogTriggerOutput(int analogTriggerHandle, int type);
+
+  @SuppressWarnings("AbbreviationAsWordInName")
+  public static native int getAnalogTriggerFPGAIndex(int analogTriggerHandle);
 }

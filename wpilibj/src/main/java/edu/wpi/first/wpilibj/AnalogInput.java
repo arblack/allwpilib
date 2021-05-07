@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.wpilibj;
 
@@ -11,7 +8,7 @@ import edu.wpi.first.hal.AccumulatorResult;
 import edu.wpi.first.hal.AnalogJNI;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
-import edu.wpi.first.hal.sim.AnalogInSim;
+import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.hal.util.AllocationException;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SendableRegistry;
@@ -48,12 +45,13 @@ public class AnalogInput implements PIDSource, Sendable, AutoCloseable {
     final int portHandle = HAL.getPort((byte) channel);
     m_port = AnalogJNI.initializeAnalogInputPort(portHandle);
 
-    HAL.report(tResourceType.kResourceType_AnalogChannel, channel);
+    HAL.report(tResourceType.kResourceType_AnalogChannel, channel + 1);
     SendableRegistry.addLW(this, "AnalogInput", channel);
   }
 
   @Override
   public void close() {
+    SendableRegistry.remove(this);
     AnalogJNI.freeAnalogInputPort(m_port);
     m_port = 0;
     m_channel = 0;
@@ -182,13 +180,16 @@ public class AnalogInput implements PIDSource, Sendable, AutoCloseable {
     return AnalogJNI.getAnalogOversampleBits(m_port);
   }
 
-  /**
-   * Initialize the accumulator.
-   */
+  /** Initialize the accumulator. */
   public void initAccumulator() {
     if (!isAccumulatorChannel()) {
-      throw new AllocationException("Accumulators are only available on slot " + kAccumulatorSlot
-          + " on channels " + kAccumulatorChannels[0] + ", " + kAccumulatorChannels[1]);
+      throw new AllocationException(
+          "Accumulators are only available on slot "
+              + kAccumulatorSlot
+              + " on channels "
+              + kAccumulatorChannels[0]
+              + ", "
+              + kAccumulatorChannels[1]);
     }
     m_accumulatorOffset = 0;
     AnalogJNI.initAccumulator(m_port);
@@ -205,9 +206,7 @@ public class AnalogInput implements PIDSource, Sendable, AutoCloseable {
     m_accumulatorOffset = initialValue;
   }
 
-  /**
-   * Resets the accumulator to the initial value.
-   */
+  /** Resets the accumulator to the initial value. */
   public void resetAccumulator() {
     AnalogJNI.resetAccumulator(m_port);
 
@@ -217,7 +216,6 @@ public class AnalogInput implements PIDSource, Sendable, AutoCloseable {
     final double overSamples = 1 << getOversampleBits();
     final double averageSamples = 1 << getAverageBits();
     Timer.delay(sampleTime * overSamples * averageSamples);
-
   }
 
   /**
@@ -344,13 +342,18 @@ public class AnalogInput implements PIDSource, Sendable, AutoCloseable {
     return getAverageVoltage();
   }
 
+  /**
+   * Indicates this input is used by a simulated device.
+   *
+   * @param device simulated device handle
+   */
+  public void setSimDevice(SimDevice device) {
+    AnalogJNI.setAnalogInputSimDevice(m_port, device.getNativeHandle());
+  }
+
   @Override
   public void initSendable(SendableBuilder builder) {
     builder.setSmartDashboardType("Analog Input");
     builder.addDoubleProperty("Value", this::getAverageVoltage, null);
-  }
-
-  public AnalogInSim getSimObject() {
-    return new AnalogInSim(m_channel);
   }
 }

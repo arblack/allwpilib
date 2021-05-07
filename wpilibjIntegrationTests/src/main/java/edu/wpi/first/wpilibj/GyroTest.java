@@ -1,27 +1,20 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.wpilibj;
 
-import java.util.logging.Logger;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import edu.wpi.first.wpilibj.fixtures.TiltPanCameraFixture;
 import edu.wpi.first.wpilibj.test.AbstractComsSetup;
 import edu.wpi.first.wpilibj.test.TestBench;
+import java.util.logging.Logger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
-/**
- * Tests that the {@link TiltPanCameraFixture}.
- */
+/** Tests that the {@link TiltPanCameraFixture}. */
 public class GyroTest extends AbstractComsSetup {
   private static final Logger logger = Logger.getLogger(GyroTest.class.getName());
 
@@ -56,7 +49,7 @@ public class GyroTest extends AbstractComsSetup {
 
   public void testInitial(AnalogGyro gyro) {
     double angle = gyro.getAngle();
-    assertEquals(errorMessage(angle, 0), 0, angle, .5);
+    assertEquals(errorMessage(angle, 0), 0, angle, 0.5);
   }
 
   /**
@@ -68,7 +61,7 @@ public class GyroTest extends AbstractComsSetup {
     // Set angle
     for (int i = 0; i < 5; i++) {
       m_tpcam.getPan().set(0);
-      Timer.delay(.1);
+      Timer.delay(0.1);
     }
 
     Timer.delay(0.5);
@@ -92,14 +85,13 @@ public class GyroTest extends AbstractComsSetup {
     assertEquals(errorMessage(diff, TEST_ANGLE), TEST_ANGLE, angle, 10);
   }
 
-
   protected void testDeviationOverTime(AnalogGyro gyro) {
     // Make sure that the test isn't influenced by any previous motions.
     Timer.delay(0.5);
     gyro.reset();
     Timer.delay(0.25);
     double angle = gyro.getAngle();
-    assertEquals(errorMessage(angle, 0), 0, angle, .5);
+    assertEquals(errorMessage(angle, 0), 0, angle, 0.5);
     Timer.delay(5);
     angle = gyro.getAngle();
     assertEquals("After 5 seconds " + errorMessage(angle, 0), 0, angle, 2.0);
@@ -125,5 +117,4 @@ public class GyroTest extends AbstractComsSetup {
   private String errorMessage(double difference, double target) {
     return "Gyro angle skewed " + difference + " deg away from target " + target;
   }
-
 }

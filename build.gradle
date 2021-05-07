@@ -2,25 +2,20 @@ import edu.wpi.first.toolchain.*
 
 plugins {
     id 'base'
-    id 'edu.wpi.first.wpilib.versioning.WPILibVersioningPlugin' version '4.0.1'
-    id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.1'
+    id 'edu.wpi.first.wpilib.versioning.WPILibVersioningPlugin' version '4.1.0'
+    id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
     id 'edu.wpi.first.NativeUtils' apply false
-    id 'edu.wpi.first.GradleJni' version '0.9.1'
-    id 'edu.wpi.first.GradleVsCode' version '0.9.4'
+    id 'edu.wpi.first.GradleJni' version '0.10.1'
+    id 'edu.wpi.first.GradleVsCode' version '0.11.0'
     id 'idea'
     id 'visual-studio'
-    id 'com.gradle.build-scan' version '2.3'
-    id 'net.ltgt.errorprone' version '0.6' apply false
-    id 'com.github.johnrengelman.shadow' version '4.0.3' apply false
+    id 'net.ltgt.errorprone' version '1.1.1' apply false
+    id 'com.github.johnrengelman.shadow' version '5.2.0' apply false
+    id 'com.diffplug.spotless' version '5.5.0'
 }
 
-if (project.hasProperty('buildServer')) {
-    wpilibVersioning.buildServerMode = true
-}
-
-if (project.hasProperty('releaseMode')) {
-    wpilibVersioning.releaseMode = true
-}
+wpilibVersioning.buildServerMode = project.hasProperty('buildServer')
+wpilibVersioning.releaseMode = project.hasProperty('releaseMode')
 
 allprojects {
     repositories {
@@ -40,7 +35,7 @@ buildScan {
     publishAlways()
 }
 
-ext.licenseFile = files("$rootDir/LICENSE.txt", "$rootDir/ThirdPartyNotices.txt")
+ext.licenseFile = files("$rootDir/LICENSE.md", "$rootDir/ThirdPartyNotices.txt")
 
 if (project.hasProperty("publishVersion")) {
     wpilibVersioning.version.set(project.publishVersion)
@@ -99,7 +94,33 @@ subprojects {
     // Disables doclint in java 8.
     if (JavaVersion.current().isJava8Compatible()) {
         tasks.withType(Javadoc) {
-            options.addStringOption('Xdoclint:none', '-quiet')
+            if (project.name != "docs") {
+                options.addStringOption('Xdoclint:none', '-quiet')
+            }
+        }
+    }
+
+    // Sign outputs with Developer ID
+    if (project.hasProperty("developerID")) {
+        tasks.withType(AbstractLinkTask) { task ->
+            // Don't sign any executables because codesign complains
+            // about relative rpath.
+            if (!(task instanceof LinkExecutable)) {
+                doLast {
+                    // Get path to binary.
+                    String path = task.getLinkedFile().getAsFile().get().getAbsolutePath()
+                    exec {
+                        workingDir rootDir
+                        def args = [
+                            "sh",
+                            "-c",
+                            "codesign --force --strict --timestamp --options=runtime " +
+                            "--verbose -s ${project.findProperty("developerID")} ${path}"
+                        ]
+                        commandLine args
+                    }
+                }
+            }
         }
     }
 }
@@ -108,6 +129,49 @@ ext.getCurrentArch = {
     return NativePlatforms.desktop
 }
 
+spotless {
+    java {
+        target fileTree('.') {
+            include '**/*.java'
+            exclude '**/build/**', '**/build-*/**'
+        }
+        toggleOffOn()
+        googleJavaFormat()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    groovyGradle {
+        target fileTree('.') {
+            include '**/*.gradle'
+            exclude '**/build/**', '**/build-*/**'
+        }
+        greclipse()
+        indentWithSpaces(4)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format 'xml', {
+        target fileTree('.') {
+            include '**/*.xml'
+            exclude '**/build/**', '**/build-*/**'
+        }
+        eclipseWtp('xml')
+        trimTrailingWhitespace()
+        indentWithSpaces(2)
+        endWithNewline()
+    }
+    format 'misc', {
+        target fileTree('.') {
+            include '**/*.md', '**/.gitignore'
+            exclude '**/build/**', '**/build-*/**'
+        }
+        trimTrailingWhitespace()
+        indentWithSpaces(2)
+        endWithNewline()
+    }
+}
+
 wrapper {
-    gradleVersion = '5.4.1'
+    gradleVersion = '6.0.1'
 }

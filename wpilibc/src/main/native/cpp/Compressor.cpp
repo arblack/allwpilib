@@ -1,14 +1,11 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2014-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #include "frc/Compressor.h"
 
 #include <hal/Compressor.h>
-#include <hal/HAL.h>
+#include <hal/FRCUsageReporting.h>
 #include <hal/Ports.h>
 #include <hal/Solenoid.h>
 
@@ -22,28 +19,33 @@ Compressor::Compressor(int pcmID) : m_module(pcmID) {
   int32_t status = 0;
   m_compressorHandle = HAL_InitializeCompressor(m_module, &status);
   if (status != 0) {
-    wpi_setErrorWithContextRange(status, 0, HAL_GetNumPCMModules(), pcmID,
-                                 HAL_GetErrorMessage(status));
+    wpi_setHALErrorWithRange(status, 0, HAL_GetNumPCMModules(), pcmID);
     return;
   }
   SetClosedLoopControl(true);
 
-  HAL_Report(HALUsageReporting::kResourceType_Compressor, pcmID);
+  HAL_Report(HALUsageReporting::kResourceType_Compressor, pcmID + 1);
   SendableRegistry::GetInstance().AddLW(this, "Compressor", pcmID);
 }
 
 void Compressor::Start() {
-  if (StatusIsFatal()) return;
+  if (StatusIsFatal()) {
+    return;
+  }
   SetClosedLoopControl(true);
 }
 
 void Compressor::Stop() {
-  if (StatusIsFatal()) return;
+  if (StatusIsFatal()) {
+    return;
+  }
   SetClosedLoopControl(false);
 }
 
 bool Compressor::Enabled() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value;
 
@@ -57,7 +59,9 @@ bool Compressor::Enabled() const {
 }
 
 bool Compressor::GetPressureSwitchValue() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value;
 
@@ -71,7 +75,9 @@ bool Compressor::GetPressureSwitchValue() const {
 }
 
 double Compressor::GetCompressorCurrent() const {
-  if (StatusIsFatal()) return 0;
+  if (StatusIsFatal()) {
+    return 0;
+  }
   int32_t status = 0;
   double value;
 
@@ -85,7 +91,9 @@ double Compressor::GetCompressorCurrent() const {
 }
 
 void Compressor::SetClosedLoopControl(bool on) {
-  if (StatusIsFatal()) return;
+  if (StatusIsFatal()) {
+    return;
+  }
   int32_t status = 0;
 
   HAL_SetCompressorClosedLoopControl(m_compressorHandle, on, &status);
@@ -96,7 +104,9 @@ void Compressor::SetClosedLoopControl(bool on) {
 }
 
 bool Compressor::GetClosedLoopControl() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value;
 
@@ -110,7 +120,9 @@ bool Compressor::GetClosedLoopControl() const {
 }
 
 bool Compressor::GetCompressorCurrentTooHighFault() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value;
 
@@ -124,7 +136,9 @@ bool Compressor::GetCompressorCurrentTooHighFault() const {
 }
 
 bool Compressor::GetCompressorCurrentTooHighStickyFault() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value;
 
@@ -139,7 +153,9 @@ bool Compressor::GetCompressorCurrentTooHighStickyFault() const {
 }
 
 bool Compressor::GetCompressorShortedStickyFault() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value;
 
@@ -153,7 +169,9 @@ bool Compressor::GetCompressorShortedStickyFault() const {
 }
 
 bool Compressor::GetCompressorShortedFault() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value;
 
@@ -167,7 +185,9 @@ bool Compressor::GetCompressorShortedFault() const {
 }
 
 bool Compressor::GetCompressorNotConnectedStickyFault() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value;
 
@@ -181,7 +201,9 @@ bool Compressor::GetCompressorNotConnectedStickyFault() const {
 }
 
 bool Compressor::GetCompressorNotConnectedFault() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value;
 
@@ -195,7 +217,9 @@ bool Compressor::GetCompressorNotConnectedFault() const {
 }
 
 void Compressor::ClearAllPCMStickyFaults() {
-  if (StatusIsFatal()) return;
+  if (StatusIsFatal()) {
+    return;
+  }
   int32_t status = 0;
 
   HAL_ClearAllPCMStickyFaults(m_module, &status);
@@ -205,15 +229,17 @@ void Compressor::ClearAllPCMStickyFaults() {
   }
 }
 
+int Compressor::GetModule() const {
+  return m_module;
+}
+
 void Compressor::InitSendable(SendableBuilder& builder) {
   builder.SetSmartDashboardType("Compressor");
-  builder.AddBooleanProperty("Enabled", [=]() { return Enabled(); },
-                             [=](bool value) {
-                               if (value)
-                                 Start();
-                               else
-                                 Stop();
-                             });
+  builder.AddBooleanProperty(
+      "Closed Loop Control", [=]() { return GetClosedLoopControl(); },
+      [=](bool value) { SetClosedLoopControl(value); });
+  builder.AddBooleanProperty(
+      "Enabled", [=] { return Enabled(); }, nullptr);
   builder.AddBooleanProperty(
       "Pressure switch", [=]() { return GetPressureSwitchValue(); }, nullptr);
 }

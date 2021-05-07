@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #include "subsystems/ShooterSubsystem.h"
 
@@ -17,29 +14,30 @@ ShooterSubsystem::ShooterSubsystem()
     : PIDSubsystem(frc2::PIDController(kP, kI, kD)),
       m_shooterMotor(kShooterMotorPort),
       m_feederMotor(kFeederMotorPort),
-      m_shooterEncoder(kEncoderPorts[0], kEncoderPorts[1]) {
-  m_controller.SetTolerance(kShooterToleranceRPS);
+      m_shooterEncoder(kEncoderPorts[0], kEncoderPorts[1]),
+      m_shooterFeedforward(kS, kV) {
+  m_controller.SetTolerance(kShooterToleranceRPS.to<double>());
   m_shooterEncoder.SetDistancePerPulse(kEncoderDistancePerPulse);
+  SetSetpoint(kShooterTargetRPS.to<double>());
 }
 
-void ShooterSubsystem::UseOutput(double output) {
-  // Use a feedforward of the form kS + kV * velocity
-  m_shooterMotor.Set(output + kSFractional + kVFractional * kShooterTargetRPS);
+void ShooterSubsystem::UseOutput(double output, double setpoint) {
+  m_shooterMotor.SetVoltage(units::volt_t(output) +
+                            m_shooterFeedforward.Calculate(kShooterTargetRPS));
 }
 
-void ShooterSubsystem::Disable() {
-  // Turn off motor when we disable, since useOutput(0) doesn't stop the motor
-  // due to our feedforward
-  frc2::PIDSubsystem::Disable();
-  m_shooterMotor.Set(0);
+bool ShooterSubsystem::AtSetpoint() {
+  return m_controller.AtSetpoint();
 }
 
-bool ShooterSubsystem::AtSetpoint() { return m_controller.AtSetpoint(); }
+double ShooterSubsystem::GetMeasurement() {
+  return m_shooterEncoder.GetRate();
+}
 
-double ShooterSubsystem::GetMeasurement() { return m_shooterEncoder.GetRate(); }
+void ShooterSubsystem::RunFeeder() {
+  m_feederMotor.Set(kFeederSpeed);
+}
 
-double ShooterSubsystem::GetSetpoint() { return kShooterTargetRPS; }
-
-void ShooterSubsystem::RunFeeder() { m_feederMotor.Set(kFeederSpeed); }
-
-void ShooterSubsystem::StopFeeder() { m_feederMotor.Set(0); }
+void ShooterSubsystem::StopFeeder() {
+  m_feederMotor.Set(0);
+}

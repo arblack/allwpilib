@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.wpilibj;
 
@@ -23,26 +20,25 @@ public class Servo extends PWM {
   private static final double kMinServoAngle = 0.0;
 
   protected static final double kDefaultMaxServoPWM = 2.4;
-  protected static final double kDefaultMinServoPWM = .6;
+  protected static final double kDefaultMinServoPWM = 0.6;
 
   /**
    * Constructor.<br>
    *
-   * <p>By default {@value #kDefaultMaxServoPWM} ms is used as the maxPWM value<br> By default
-   * {@value #kDefaultMinServoPWM} ms is used as the minPWM value<br>
+   * <p>By default {@value #kDefaultMaxServoPWM} ms is used as the maxPWM value<br>
+   * By default {@value #kDefaultMinServoPWM} ms is used as the minPWM value<br>
    *
    * @param channel The PWM channel to which the servo is attached. 0-9 are on-board, 10-19 are on
-   *                the MXP port
+   *     the MXP port
    */
   public Servo(final int channel) {
     super(channel);
     setBounds(kDefaultMaxServoPWM, 0, 0, 0, kDefaultMinServoPWM);
     setPeriodMultiplier(PeriodMultiplier.k4X);
 
-    HAL.report(tResourceType.kResourceType_Servo, getChannel());
+    HAL.report(tResourceType.kResourceType_Servo, getChannel() + 1);
     SendableRegistry.setName(this, "Servo", getChannel());
   }
-
 
   /**
    * Set the servo position.

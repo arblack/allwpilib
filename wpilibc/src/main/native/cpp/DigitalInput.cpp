@@ -1,17 +1,14 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #include "frc/DigitalInput.h"
 
 #include <limits>
-#include <utility>
 
 #include <hal/DIO.h>
-#include <hal/HAL.h>
+#include <hal/FRCUsageReporting.h>
+#include <hal/HALBase.h>
 #include <hal/Ports.h>
 
 #include "frc/SensorUtil.h"
@@ -33,41 +30,55 @@ DigitalInput::DigitalInput(int channel) {
   int32_t status = 0;
   m_handle = HAL_InitializeDIOPort(HAL_GetPort(channel), true, &status);
   if (status != 0) {
-    wpi_setErrorWithContextRange(status, 0, HAL_GetNumDigitalChannels(),
-                                 channel, HAL_GetErrorMessage(status));
+    wpi_setHALErrorWithRange(status, 0, HAL_GetNumDigitalChannels(), channel);
     m_handle = HAL_kInvalidHandle;
     m_channel = std::numeric_limits<int>::max();
     return;
   }
 
-  HAL_Report(HALUsageReporting::kResourceType_DigitalInput, channel);
+  HAL_Report(HALUsageReporting::kResourceType_DigitalInput, channel + 1);
   SendableRegistry::GetInstance().AddLW(this, "DigitalInput", channel);
 }
 
 DigitalInput::~DigitalInput() {
-  if (StatusIsFatal()) return;
+  if (StatusIsFatal()) {
+    return;
+  }
   HAL_FreeDIOPort(m_handle);
 }
 
 bool DigitalInput::Get() const {
-  if (StatusIsFatal()) return false;
+  if (StatusIsFatal()) {
+    return false;
+  }
   int32_t status = 0;
   bool value = HAL_GetDIO(m_handle, &status);
-  wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+  wpi_setHALError(status);
   return value;
 }
 
-HAL_Handle DigitalInput::GetPortHandleForRouting() const { return m_handle; }
-
-AnalogTriggerType DigitalInput::GetAnalogTriggerTypeForRouting() const {
-  return (AnalogTriggerType)0;
+HAL_Handle DigitalInput::GetPortHandleForRouting() const {
+  return m_handle;
 }
 
-bool DigitalInput::IsAnalogTrigger() const { return false; }
+AnalogTriggerType DigitalInput::GetAnalogTriggerTypeForRouting() const {
+  return static_cast<AnalogTriggerType>(0);
+}
 
-int DigitalInput::GetChannel() const { return m_channel; }
+bool DigitalInput::IsAnalogTrigger() const {
+  return false;
+}
+
+void DigitalInput::SetSimDevice(HAL_SimDeviceHandle device) {
+  HAL_SetDIOSimDevice(m_handle, device);
+}
+
+int DigitalInput::GetChannel() const {
+  return m_channel;
+}
 
 void DigitalInput::InitSendable(SendableBuilder& builder) {
   builder.SetSmartDashboardType("Digital Input");
-  builder.AddBooleanProperty("Value", [=]() { return Get(); }, nullptr);
+  builder.AddBooleanProperty(
+      "Value", [=]() { return Get(); }, nullptr);
 }

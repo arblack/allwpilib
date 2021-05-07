@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2018-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #include "frc/shuffleboard/ShuffleboardContainer.h"
 
@@ -11,7 +8,6 @@
 #include <wpi/raw_ostream.h>
 
 #include "frc/shuffleboard/ComplexWidget.h"
-#include "frc/shuffleboard/SendableCameraWrapper.h"
 #include "frc/shuffleboard/ShuffleboardComponent.h"
 #include "frc/shuffleboard/ShuffleboardLayout.h"
 #include "frc/shuffleboard/SimpleWidget.h"
@@ -48,7 +44,7 @@ ShuffleboardLayout& ShuffleboardContainer::GetLayout(const wpi::Twine& title,
   wpi::SmallVector<char, 16> storage;
   auto titleRef = title.toStringRef(storage);
   if (m_layouts.count(titleRef) == 0) {
-    auto layout = std::make_unique<ShuffleboardLayout>(*this, type, titleRef);
+    auto layout = std::make_unique<ShuffleboardLayout>(*this, titleRef, type);
     auto ptr = layout.get();
     m_components.emplace_back(std::move(layout));
     m_layouts.insert(std::make_pair(titleRef, ptr));
@@ -75,21 +71,12 @@ ComplexWidget& ShuffleboardContainer::Add(const wpi::Twine& title,
   return *ptr;
 }
 
-ComplexWidget& ShuffleboardContainer::Add(const wpi::Twine& title,
-                                          const cs::VideoSource& video) {
-  return Add(title, SendableCameraWrapper::Wrap(video));
-}
-
 ComplexWidget& ShuffleboardContainer::Add(Sendable& sendable) {
   auto name = SendableRegistry::GetInstance().GetName(&sendable);
   if (name.empty()) {
     wpi::outs() << "Sendable must have a name\n";
   }
   return Add(name, sendable);
-}
-
-ComplexWidget& ShuffleboardContainer::Add(const cs::VideoSource& video) {
-  return Add(SendableCameraWrapper::Wrap(video));
 }
 
 SimpleWidget& ShuffleboardContainer::Add(

@@ -1,15 +1,13 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #include "frc/Relay.h"
 
 #include <utility>
 
-#include <hal/HAL.h>
+#include <hal/FRCUsageReporting.h>
+#include <hal/HALBase.h>
 #include <hal/Ports.h>
 #include <hal/Relay.h>
 #include <wpi/raw_ostream.h>
@@ -35,20 +33,18 @@ Relay::Relay(int channel, Relay::Direction direction)
     int32_t status = 0;
     m_forwardHandle = HAL_InitializeRelayPort(portHandle, true, &status);
     if (status != 0) {
-      wpi_setErrorWithContextRange(status, 0, HAL_GetNumRelayChannels(),
-                                   channel, HAL_GetErrorMessage(status));
+      wpi_setHALErrorWithRange(status, 0, HAL_GetNumRelayChannels(), channel);
       m_forwardHandle = HAL_kInvalidHandle;
       m_reverseHandle = HAL_kInvalidHandle;
       return;
     }
-    HAL_Report(HALUsageReporting::kResourceType_Relay, m_channel);
+    HAL_Report(HALUsageReporting::kResourceType_Relay, m_channel + 1);
   }
   if (m_direction == kBothDirections || m_direction == kReverseOnly) {
     int32_t status = 0;
     m_reverseHandle = HAL_InitializeRelayPort(portHandle, false, &status);
     if (status != 0) {
-      wpi_setErrorWithContextRange(status, 0, HAL_GetNumRelayChannels(),
-                                   channel, HAL_GetErrorMessage(status));
+      wpi_setHALErrorWithRange(status, 0, HAL_GetNumRelayChannels(), channel);
       m_forwardHandle = HAL_kInvalidHandle;
       m_reverseHandle = HAL_kInvalidHandle;
       return;
@@ -61,7 +57,7 @@ Relay::Relay(int channel, Relay::Direction direction)
   if (m_forwardHandle != HAL_kInvalidHandle) {
     HAL_SetRelay(m_forwardHandle, false, &status);
     if (status != 0) {
-      wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+      wpi_setHALError(status);
       m_forwardHandle = HAL_kInvalidHandle;
       m_reverseHandle = HAL_kInvalidHandle;
       return;
@@ -70,7 +66,7 @@ Relay::Relay(int channel, Relay::Direction direction)
   if (m_reverseHandle != HAL_kInvalidHandle) {
     HAL_SetRelay(m_reverseHandle, false, &status);
     if (status != 0) {
-      wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+      wpi_setHALError(status);
       m_forwardHandle = HAL_kInvalidHandle;
       m_reverseHandle = HAL_kInvalidHandle;
       return;
@@ -85,12 +81,18 @@ Relay::~Relay() {
   HAL_SetRelay(m_forwardHandle, false, &status);
   HAL_SetRelay(m_reverseHandle, false, &status);
   // ignore errors, as we want to make sure a free happens.
-  if (m_forwardHandle != HAL_kInvalidHandle) HAL_FreeRelayPort(m_forwardHandle);
-  if (m_reverseHandle != HAL_kInvalidHandle) HAL_FreeRelayPort(m_reverseHandle);
+  if (m_forwardHandle != HAL_kInvalidHandle) {
+    HAL_FreeRelayPort(m_forwardHandle);
+  }
+  if (m_reverseHandle != HAL_kInvalidHandle) {
+    HAL_FreeRelayPort(m_reverseHandle);
+  }
 }
 
 void Relay::Set(Relay::Value value) {
-  if (StatusIsFatal()) return;
+  if (StatusIsFatal()) {
+    return;
+  }
 
   int32_t status = 0;
 
@@ -137,46 +139,53 @@ void Relay::Set(Relay::Value value) {
       break;
   }
 
-  wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+  wpi_setHALError(status);
 }
 
 Relay::Value Relay::Get() const {
+  Relay::Value value = kOff;
   int32_t status;
 
   if (m_direction == kForwardOnly) {
     if (HAL_GetRelay(m_forwardHandle, &status)) {
-      return kOn;
+      value = kOn;
     } else {
-      return kOff;
+      value = kOff;
     }
   } else if (m_direction == kReverseOnly) {
     if (HAL_GetRelay(m_reverseHandle, &status)) {
-      return kOn;
+      value = kOn;
     } else {
-      return kOff;
+      value = kOff;
     }
   } else {
     if (HAL_GetRelay(m_forwardHandle, &status)) {
       if (HAL_GetRelay(m_reverseHandle, &status)) {
-        return kOn;
+        value = kOn;
       } else {
-        return kForward;
+        value = kForward;
       }
     } else {
       if (HAL_GetRelay(m_reverseHandle, &status)) {
-        return kReverse;
+        value = kReverse;
       } else {
-        return kOff;
+        value = kOff;
       }
     }
   }
 
-  wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+  wpi_setHALError(status);
+
+  return value;
 }
 
-int Relay::GetChannel() const { return m_channel; }
+int Relay::GetChannel() const {
+  return m_channel;
+}
 
-void Relay::StopMotor() { Set(kOff); }
+void Relay::StopMotor() {
+  Set(kOff);
+}
 
 void Relay::GetDescription(wpi::raw_ostream& desc) const {
   desc << "Relay " << GetChannel();
@@ -201,13 +210,14 @@ void Relay::InitSendable(SendableBuilder& builder) {
         }
       },
       [=](wpi::StringRef value) {
-        if (value == "Off")
+        if (value == "Off") {
           Set(kOff);
-        else if (value == "Forward")
+        } else if (value == "Forward") {
           Set(kForward);
-        else if (value == "Reverse")
+        } else if (value == "Reverse") {
           Set(kReverse);
-        else if (value == "On")
+        } else if (value == "On") {
           Set(kOn);
+        }
       });
 }

@@ -1,11 +1,10 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #pragma once
+
+#include <hal/SimDevice.h>
 
 #include "frc/ErrorBase.h"
 #include "frc/I2C.h"
@@ -52,7 +51,7 @@ class ADXL345_I2C : public ErrorBase,
   ADXL345_I2C& operator=(ADXL345_I2C&&) = default;
 
   // Accelerometer interface
-  void SetRange(Range range) override;
+  void SetRange(Range range) final;
   double GetX() override;
   double GetY() override;
   double GetZ() override;
@@ -77,6 +76,12 @@ class ADXL345_I2C : public ErrorBase,
 
  protected:
   I2C m_i2c;
+
+  hal::SimDevice m_simDevice;
+  hal::SimEnum m_simRange;
+  hal::SimDouble m_simX;
+  hal::SimDouble m_simY;
+  hal::SimDouble m_simZ;
 
   static constexpr int kAddress = 0x1D;
   static constexpr int kPowerCtlRegister = 0x2D;

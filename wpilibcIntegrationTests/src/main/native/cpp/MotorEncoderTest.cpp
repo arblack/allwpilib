@@ -1,9 +1,8 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2014-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
+
+#include <algorithm>
 
 #include "TestBench.h"
 #include "frc/Encoder.h"
@@ -46,7 +45,7 @@ class MotorEncoderTest : public testing::TestWithParam<MotorEncoderTestType> {
  protected:
   SpeedController* m_speedController;
   Encoder* m_encoder;
-  LinearFilter* m_filter;
+  LinearFilter<double>* m_filter;
 
   void SetUp() override {
     switch (GetParam()) {
@@ -68,7 +67,8 @@ class MotorEncoderTest : public testing::TestWithParam<MotorEncoderTestType> {
                                 TestBench::kTalonEncoderChannelB);
         break;
     }
-    m_filter = new LinearFilter(LinearFilter::MovingAverage(50));
+    m_filter =
+        new LinearFilter<double>(LinearFilter<double>::MovingAverage(50));
   }
 
   void TearDown() override {
@@ -146,7 +146,8 @@ TEST_P(MotorEncoderTest, PositionPIDController) {
 
   /* 10 seconds should be plenty time to get to the reference */
   frc::Notifier pidRunner{[this, &pidController] {
-    m_speedController->Set(pidController.Calculate(m_encoder->GetDistance()));
+    auto speed = pidController.Calculate(m_encoder->GetDistance());
+    m_speedController->Set(std::clamp(speed, -0.2, 0.2));
   }};
   pidRunner.StartPeriodic(pidController.GetPeriod());
   Wait(10.0);
@@ -171,9 +172,9 @@ TEST_P(MotorEncoderTest, VelocityPIDController) {
 
   /* 10 seconds should be plenty time to get to the reference */
   frc::Notifier pidRunner{[this, &pidController] {
-    m_speedController->Set(
-        pidController.Calculate(m_filter->Calculate(m_encoder->GetRate())) +
-        8e-5);
+    auto speed =
+        pidController.Calculate(m_filter->Calculate(m_encoder->GetRate()));
+    m_speedController->Set(std::clamp(speed, -0.3, 0.3));
   }};
   pidRunner.StartPeriodic(pidController.GetPeriod());
   Wait(10.0);

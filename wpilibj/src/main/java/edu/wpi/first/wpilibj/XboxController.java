@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2016-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.wpilibj;
 
@@ -18,9 +15,7 @@ import edu.wpi.first.hal.HAL;
  * and the mapping of ports to hardware buttons depends on the code in the Driver Station.
  */
 public class XboxController extends GenericHID {
-  /**
-   * Represents a digital button on an XboxController.
-   */
+  /** Represents a digital button on an XboxController. */
   public enum Button {
     kBumperLeft(5),
     kBumperRight(6),
@@ -41,16 +36,32 @@ public class XboxController extends GenericHID {
     }
   }
 
+  /** Represents an axis on an XboxController. */
+  public enum Axis {
+    kLeftX(0),
+    kRightX(4),
+    kLeftY(1),
+    kRightY(5),
+    kLeftTrigger(2),
+    kRightTrigger(3);
+
+    @SuppressWarnings({"MemberName", "PMD.SingularField"})
+    public final int value;
+
+    Axis(int value) {
+      this.value = value;
+    }
+  }
+
   /**
-   * Construct an instance of a joystick. The joystick index is the USB port on the drivers
-   * station.
+   * Construct an instance of a joystick. The joystick index is the USB port on the drivers station.
    *
    * @param port The port on the Driver Station that the joystick is plugged into.
    */
   public XboxController(final int port) {
     super(port);
 
-    HAL.report(tResourceType.kResourceType_XboxController, port);
+    HAL.report(tResourceType.kResourceType_XboxController, port + 1);
   }
 
   /**
@@ -62,9 +73,9 @@ public class XboxController extends GenericHID {
   @Override
   public double getX(Hand hand) {
     if (hand.equals(Hand.kLeft)) {
-      return getRawAxis(0);
+      return getRawAxis(Axis.kLeftX.value);
     } else {
-      return getRawAxis(4);
+      return getRawAxis(Axis.kRightX.value);
     }
   }
 
@@ -77,9 +88,9 @@ public class XboxController extends GenericHID {
   @Override
   public double getY(Hand hand) {
     if (hand.equals(Hand.kLeft)) {
-      return getRawAxis(1);
+      return getRawAxis(Axis.kLeftY.value);
     } else {
-      return getRawAxis(5);
+      return getRawAxis(Axis.kRightY.value);
     }
   }
 
@@ -91,9 +102,9 @@ public class XboxController extends GenericHID {
    */
   public double getTriggerAxis(Hand hand) {
     if (hand.equals(Hand.kLeft)) {
-      return getRawAxis(2);
+      return getRawAxis(Axis.kLeftTrigger.value);
     } else {
-      return getRawAxis(3);
+      return getRawAxis(Axis.kRightTrigger.value);
     }
   }
 

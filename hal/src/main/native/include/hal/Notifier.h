@@ -1,13 +1,12 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2016-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #pragma once
 
 #include <stdint.h>
+
+#include <wpi/nodiscard.h>
 
 #include "hal/Types.h"
 
@@ -30,6 +29,34 @@ extern "C" {
  * @return the created notifier
  */
 HAL_NotifierHandle HAL_InitializeNotifier(int32_t* status);
+
+/**
+ * Sets the HAL notifier thread priority.
+ *
+ * The HAL notifier thread is responsible for managing the FPGA's notifier
+ * interrupt and waking up user's Notifiers when it's their time to run.
+ * Giving the HAL notifier thread real-time priority helps ensure the user's
+ * real-time Notifiers, if any, are notified to run in a timely manner.
+ *
+ * @param realTime Set to true to set a real-time priority, false for standard
+ *                 priority.
+ * @param priority Priority to set the thread to. For real-time, this is 1-99
+ *                 with 99 being highest. For non-real-time, this is forced to
+ *                 0. See "man 7 sched" for more details.
+ * @param status   Error status variable. 0 on success.
+ * @return         True on success.
+ */
+HAL_Bool HAL_SetNotifierThreadPriority(HAL_Bool realTime, int32_t priority,
+                                       int32_t* status);
+
+/**
+ * Sets the name of a notifier.
+ *
+ * @param notifierHandle the notifier handle
+ * @param name name
+ */
+void HAL_SetNotifierName(HAL_NotifierHandle notifierHandle, const char* name,
+                         int32_t* status);
 
 /**
  * Stops a notifier from running.
@@ -74,11 +101,14 @@ void HAL_CancelNotifierAlarm(HAL_NotifierHandle notifierHandle,
  * Waits for the next alarm for the specific notifier.
  *
  * This is a blocking call until either the time elapses or HAL_StopNotifier
- * gets called.
+ * gets called. If the latter occurs, this function will return zero and any
+ * loops using this function should exit. Failing to do so can lead to
+ * use-after-frees.
  *
  * @param notifierHandle the notifier handle
  * @return               the FPGA time the notifier returned
  */
+WPI_NODISCARD
 uint64_t HAL_WaitForNotifierAlarm(HAL_NotifierHandle notifierHandle,
                                   int32_t* status);
 

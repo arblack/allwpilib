@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2015-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #include "frc/DigitalGlitchFilter.h"
 
@@ -13,7 +10,7 @@
 
 #include <hal/Constants.h>
 #include <hal/DIO.h>
-#include <hal/HAL.h>
+#include <hal/FRCUsageReporting.h>
 
 #include "frc/Counter.h"
 #include "frc/Encoder.h"
@@ -38,7 +35,7 @@ DigitalGlitchFilter::DigitalGlitchFilter() {
   *index = true;
 
   HAL_Report(HALUsageReporting::kResourceType_DigitalGlitchFilter,
-             m_channelIndex);
+             m_channelIndex + 1);
   SendableRegistry::GetInstance().AddLW(this, "DigitalGlitchFilter",
                                         m_channelIndex);
 }
@@ -81,15 +78,12 @@ void DigitalGlitchFilter::DoAdd(DigitalSource* input, int requestedIndex) {
     int32_t status = 0;
     HAL_SetFilterSelect(input->GetPortHandleForRouting(), requestedIndex,
                         &status);
-    wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+    wpi_setHALError(status);
 
     // Validate that we set it correctly.
     int actualIndex =
         HAL_GetFilterSelect(input->GetPortHandleForRouting(), &status);
     wpi_assertEqual(actualIndex, requestedIndex);
-
-    HAL_Report(HALUsageReporting::kResourceType_DigitalInput,
-               input->GetChannel());
   }
 }
 
@@ -109,7 +103,9 @@ void DigitalGlitchFilter::Add(Counter* input) {
   Add(input->m_downSource.get());
 }
 
-void DigitalGlitchFilter::Remove(DigitalSource* input) { DoAdd(input, 0); }
+void DigitalGlitchFilter::Remove(DigitalSource* input) {
+  DoAdd(input, 0);
+}
 
 void DigitalGlitchFilter::Remove(Encoder* input) {
   Remove(input->m_aSource.get());
@@ -130,7 +126,7 @@ void DigitalGlitchFilter::Remove(Counter* input) {
 void DigitalGlitchFilter::SetPeriodCycles(int fpgaCycles) {
   int32_t status = 0;
   HAL_SetFilterPeriod(m_channelIndex, fpgaCycles, &status);
-  wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+  wpi_setHALError(status);
 }
 
 void DigitalGlitchFilter::SetPeriodNanoSeconds(uint64_t nanoseconds) {
@@ -139,14 +135,14 @@ void DigitalGlitchFilter::SetPeriodNanoSeconds(uint64_t nanoseconds) {
       nanoseconds * HAL_GetSystemClockTicksPerMicrosecond() / 4 / 1000;
   HAL_SetFilterPeriod(m_channelIndex, fpgaCycles, &status);
 
-  wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+  wpi_setHALError(status);
 }
 
 int DigitalGlitchFilter::GetPeriodCycles() {
   int32_t status = 0;
   int fpgaCycles = HAL_GetFilterPeriod(m_channelIndex, &status);
 
-  wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+  wpi_setHALError(status);
 
   return fpgaCycles;
 }
@@ -155,7 +151,7 @@ uint64_t DigitalGlitchFilter::GetPeriodNanoSeconds() {
   int32_t status = 0;
   int fpgaCycles = HAL_GetFilterPeriod(m_channelIndex, &status);
 
-  wpi_setErrorWithContext(status, HAL_GetErrorMessage(status));
+  wpi_setHALError(status);
 
   return static_cast<uint64_t>(fpgaCycles) * 1000L /
          static_cast<uint64_t>(HAL_GetSystemClockTicksPerMicrosecond() / 4);

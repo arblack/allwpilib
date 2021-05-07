@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #include "RobotContainer.h"
 
@@ -25,17 +22,10 @@ RobotContainer::RobotContainer()
   frc::SmartDashboard::PutData(&m_wrist);
   frc::SmartDashboard::PutData(&m_claw);
 
-  m_claw.Log();
-  m_wrist.Log();
-  m_elevator.Log();
-  m_drivetrain.Log();
-
   m_drivetrain.SetDefaultCommand(TankDrive(
-      &m_drivetrain,
       [this] { return m_joy.GetY(frc::GenericHID::JoystickHand::kLeftHand); },
-      [this] {
-        return m_joy.GetY(frc::GenericHID::JoystickHand::kRightHand);
-      }));
+      [this] { return m_joy.GetY(frc::GenericHID::JoystickHand::kRightHand); },
+      &m_drivetrain));
 
   // Configure the button bindings
   ConfigureButtonBindings();
@@ -52,8 +42,8 @@ void RobotContainer::ConfigureButtonBindings() {
   frc2::JoystickButton m_l1{&m_joy, 11};
   frc2::JoystickButton m_r1{&m_joy, 12};
 
-  m_dUp.WhenPressed(SetElevatorSetpoint(0.2, &m_elevator));
-  m_dDown.WhenPressed(SetElevatorSetpoint(-0.2, &m_elevator));
+  m_dUp.WhenPressed(SetElevatorSetpoint(0.25, &m_elevator));
+  m_dDown.WhenPressed(SetElevatorSetpoint(0.0, &m_elevator));
   m_dRight.WhenPressed(CloseClaw(&m_claw));
   m_dLeft.WhenPressed(OpenClaw(&m_claw));
 

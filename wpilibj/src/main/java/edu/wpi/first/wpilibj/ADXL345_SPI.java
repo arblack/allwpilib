@@ -1,26 +1,23 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.wpilibj;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.hal.SimDevice;
+import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.hal.SimEnum;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SendableRegistry;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-/**
- * ADXL345 SPI Accelerometer.
- */
+/** ADXL345 SPI Accelerometer. */
 @SuppressWarnings({"TypeName", "PMD.UnusedPrivateField"})
 public class ADXL345_SPI implements Accelerometer, Sendable, AutoCloseable {
   private static final int kPowerCtlRegister = 0x2D;
@@ -47,10 +44,7 @@ public class ADXL345_SPI implements Accelerometer, Sendable, AutoCloseable {
     kY((byte) 0x02),
     kZ((byte) 0x04);
 
-    /**
-     * The integer value representing this enumeration.
-     */
-    @SuppressWarnings("MemberName")
+    /** The integer value representing this enumeration. */
     public final byte value;
 
     Axes(byte value) {
@@ -67,21 +61,49 @@ public class ADXL345_SPI implements Accelerometer, Sendable, AutoCloseable {
 
   protected SPI m_spi;
 
+  protected SimDevice m_simDevice;
+  protected SimEnum m_simRange;
+  protected SimDouble m_simX;
+  protected SimDouble m_simY;
+  protected SimDouble m_simZ;
+
   /**
    * Constructor.
    *
-   * @param port  The SPI port that the accelerometer is connected to
+   * @param port The SPI port that the accelerometer is connected to
    * @param range The range (+ or -) that the accelerometer will measure.
    */
   public ADXL345_SPI(SPI.Port port, Range range) {
     m_spi = new SPI(port);
+    // simulation
+    m_simDevice = SimDevice.create("Accel:ADXL345_SPI", port.value);
+    if (m_simDevice != null) {
+      m_simRange =
+          m_simDevice.createEnumDouble(
+              "range",
+              SimDevice.Direction.kOutput,
+              new String[] {"2G", "4G", "8G", "16G"},
+              new double[] {2.0, 4.0, 8.0, 16.0},
+              0);
+      m_simX = m_simDevice.createDouble("x", SimDevice.Direction.kInput, 0.0);
+      m_simY = m_simDevice.createDouble("y", SimDevice.Direction.kInput, 0.0);
+      m_simZ = m_simDevice.createDouble("z", SimDevice.Direction.kInput, 0.0);
+    }
     init(range);
     SendableRegistry.addLW(this, "ADXL345_SPI", port.value);
   }
 
   @Override
   public void close() {
-    m_spi.close();
+    SendableRegistry.remove(this);
+    if (m_spi != null) {
+      m_spi.close();
+      m_spi = null;
+    }
+    if (m_simDevice != null) {
+      m_simDevice.close();
+      m_simDevice = null;
+    }
   }
 
   /**
@@ -129,8 +151,12 @@ public class ADXL345_SPI implements Accelerometer, Sendable, AutoCloseable {
     }
 
     // Specify the data format to read
-    byte[] commands = new byte[]{kDataFormatRegister, (byte) (kDataFormat_FullRes | value)};
+    byte[] commands = new byte[] {kDataFormatRegister, (byte) (kDataFormat_FullRes | value)};
     m_spi.write(commands, commands.length);
+
+    if (m_simRange != null) {
+      m_simRange.set(value);
+    }
   }
 
   @Override
@@ -155,9 +181,18 @@ public class ADXL345_SPI implements Accelerometer, Sendable, AutoCloseable {
    * @return Acceleration of the ADXL345 in Gs.
    */
   public double getAcceleration(ADXL345_SPI.Axes axis) {
+    if (axis == Axes.kX && m_simX != null) {
+      return m_simX.get();
+    }
+    if (axis == Axes.kY && m_simY != null) {
+      return m_simY.get();
+    }
+    if (axis == Axes.kZ && m_simZ != null) {
+      return m_simZ.get();
+    }
     ByteBuffer transferBuffer = ByteBuffer.allocate(3);
-    transferBuffer.put(0,
-        (byte) ((kAddress_Read | kAddress_MultiByte | kDataRegister) + axis.value));
+    transferBuffer.put(
+        0, (byte) ((kAddress_Read | kAddress_MultiByte | kDataRegister) + axis.value));
     m_spi.transaction(transferBuffer, transferBuffer, 3);
     // Sensor is little endian
     transferBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -172,6 +207,12 @@ public class ADXL345_SPI implements Accelerometer, Sendable, AutoCloseable {
    */
   public ADXL345_SPI.AllAxes getAccelerations() {
     ADXL345_SPI.AllAxes data = new ADXL345_SPI.AllAxes();
+    if (m_simX != null && m_simY != null && m_simZ != null) {
+      data.XAxis = m_simX.get();
+      data.YAxis = m_simY.get();
+      data.ZAxis = m_simZ.get();
+      return data;
+    }
     if (m_spi != null) {
       ByteBuffer dataBuffer = ByteBuffer.allocate(7);
       // Select the data address.
@@ -193,11 +234,12 @@ public class ADXL345_SPI implements Accelerometer, Sendable, AutoCloseable {
     NetworkTableEntry entryX = builder.getEntry("X");
     NetworkTableEntry entryY = builder.getEntry("Y");
     NetworkTableEntry entryZ = builder.getEntry("Z");
-    builder.setUpdateTable(() -> {
-      AllAxes data = getAccelerations();
-      entryX.setDouble(data.XAxis);
-      entryY.setDouble(data.YAxis);
-      entryZ.setDouble(data.ZAxis);
-    });
+    builder.setUpdateTable(
+        () -> {
+          AllAxes data = getAccelerations();
+          entryX.setDouble(data.XAxis);
+          entryY.setDouble(data.YAxis);
+          entryZ.setDouble(data.ZAxis);
+        });
   }
 }

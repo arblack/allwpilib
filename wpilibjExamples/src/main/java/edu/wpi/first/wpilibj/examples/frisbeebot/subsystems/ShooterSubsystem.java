@@ -1,55 +1,39 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2019 FIRST. All Rights Reserved.                             */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.wpilibj.examples.frisbeebot.subsystems;
 
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.PWMVictorSPX;
+import edu.wpi.first.wpilibj.PWMSparkMax;
 import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
+import edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants;
 import edu.wpi.first.wpilibj2.command.PIDSubsystem;
 
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kD;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kEncoderDistancePerPulse;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kEncoderPorts;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kEncoderReversed;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kFeederMotorPort;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kFeederSpeed;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kI;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kP;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kSFractional;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kShooterMotorPort;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kShooterTargetRPS;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kShooterToleranceRPS;
-import static edu.wpi.first.wpilibj.examples.frisbeebot.Constants.ShooterConstants.kVFractional;
-
 public class ShooterSubsystem extends PIDSubsystem {
-  private final PWMVictorSPX m_shooterMotor = new PWMVictorSPX(kShooterMotorPort);
-  private final PWMVictorSPX m_feederMotor = new PWMVictorSPX(kFeederMotorPort);
+  private final PWMSparkMax m_shooterMotor = new PWMSparkMax(ShooterConstants.kShooterMotorPort);
+  private final PWMSparkMax m_feederMotor = new PWMSparkMax(ShooterConstants.kFeederMotorPort);
   private final Encoder m_shooterEncoder =
-      new Encoder(kEncoderPorts[0], kEncoderPorts[1], kEncoderReversed);
+      new Encoder(
+          ShooterConstants.kEncoderPorts[0],
+          ShooterConstants.kEncoderPorts[1],
+          ShooterConstants.kEncoderReversed);
+  private final SimpleMotorFeedforward m_shooterFeedforward =
+      new SimpleMotorFeedforward(
+          ShooterConstants.kSVolts, ShooterConstants.kVVoltSecondsPerRotation);
 
-  /**
-   * The shooter subsystem for the robot.
-   */
+  /** The shooter subsystem for the robot. */
   public ShooterSubsystem() {
-    super(new PIDController(kP, kI, kD));
-    getController().setTolerance(kShooterToleranceRPS);
-    m_shooterEncoder.setDistancePerPulse(kEncoderDistancePerPulse);
+    super(new PIDController(ShooterConstants.kP, ShooterConstants.kI, ShooterConstants.kD));
+    getController().setTolerance(ShooterConstants.kShooterToleranceRPS);
+    m_shooterEncoder.setDistancePerPulse(ShooterConstants.kEncoderDistancePerPulse);
+    setSetpoint(ShooterConstants.kShooterTargetRPS);
   }
 
   @Override
-  public void useOutput(double output) {
-    // Use a feedforward of the form kS + kV * velocity
-    m_shooterMotor.set(output + kSFractional + kVFractional * kShooterTargetRPS);
-  }
-
-  @Override
-  public double getSetpoint() {
-    return kShooterTargetRPS;
+  public void useOutput(double output, double setpoint) {
+    m_shooterMotor.setVoltage(output + m_shooterFeedforward.calculate(setpoint));
   }
 
   @Override
@@ -62,18 +46,10 @@ public class ShooterSubsystem extends PIDSubsystem {
   }
 
   public void runFeeder() {
-    m_feederMotor.set(kFeederSpeed);
+    m_feederMotor.set(ShooterConstants.kFeederSpeed);
   }
 
   public void stopFeeder() {
     m_feederMotor.set(0);
-  }
-
-  @Override
-  public void disable() {
-    super.disable();
-    // Turn off motor when we disable, since useOutput(0) doesn't stop the motor due to our
-    // feedforward
-    m_shooterMotor.set(0);
   }
 }

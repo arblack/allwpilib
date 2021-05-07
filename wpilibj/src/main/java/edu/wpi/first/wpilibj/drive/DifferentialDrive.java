@@ -1,13 +1,8 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2008-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.wpilibj.drive;
-
-import java.util.StringJoiner;
 
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -17,26 +12,28 @@ import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SendableRegistry;
-import edu.wpi.first.wpiutil.math.MathUtils;
+import edu.wpi.first.wpiutil.math.MathUtil;
+import java.util.StringJoiner;
 
 /**
  * A class for driving differential drive/skid-steer drive platforms such as the Kit of Parts drive
  * base, "tank drive", or West Coast Drive.
  *
  * <p>These drive bases typically have drop-center / skid-steer with two or more wheels per side
- * (e.g., 6WD or 8WD). This class takes a SpeedController per side. For four and
- * six motor drivetrains, construct and pass in {@link edu.wpi.first.wpilibj.SpeedControllerGroup}
- * instances as follows.
+ * (e.g., 6WD or 8WD). This class takes a SpeedController per side. For four and six motor
+ * drivetrains, construct and pass in {@link edu.wpi.first.wpilibj.SpeedControllerGroup} instances
+ * as follows.
  *
  * <p>Four motor drivetrain:
+ *
  * <pre><code>
  * public class Robot {
- *   Spark m_frontLeft = new Spark(1);
- *   Spark m_rearLeft = new Spark(2);
+ *   SpeedController m_frontLeft = new PWMVictorSPX(1);
+ *   SpeedController m_rearLeft = new PWMVictorSPX(2);
  *   SpeedControllerGroup m_left = new SpeedControllerGroup(m_frontLeft, m_rearLeft);
  *
- *   Spark m_frontRight = new Spark(3);
- *   Spark m_rearRight = new Spark(4);
+ *   SpeedController m_frontRight = new PWMVictorSPX(3);
+ *   SpeedController m_rearRight = new PWMVictorSPX(4);
  *   SpeedControllerGroup m_right = new SpeedControllerGroup(m_frontRight, m_rearRight);
  *
  *   DifferentialDrive m_drive = new DifferentialDrive(m_left, m_right);
@@ -44,16 +41,17 @@ import edu.wpi.first.wpiutil.math.MathUtils;
  * </code></pre>
  *
  * <p>Six motor drivetrain:
+ *
  * <pre><code>
  * public class Robot {
- *   Spark m_frontLeft = new Spark(1);
- *   Spark m_midLeft = new Spark(2);
- *   Spark m_rearLeft = new Spark(3);
+ *   SpeedController m_frontLeft = new PWMVictorSPX(1);
+ *   SpeedController m_midLeft = new PWMVictorSPX(2);
+ *   SpeedController m_rearLeft = new PWMVictorSPX(3);
  *   SpeedControllerGroup m_left = new SpeedControllerGroup(m_frontLeft, m_midLeft, m_rearLeft);
  *
- *   Spark m_frontRight = new Spark(4);
- *   Spark m_midRight = new Spark(5);
- *   Spark m_rearRight = new Spark(6);
+ *   SpeedController m_frontRight = new PWMVictorSPX(4);
+ *   SpeedController m_midRight = new PWMVictorSPX(5);
+ *   SpeedController m_rearRight = new PWMVictorSPX(6);
  *   SpeedControllerGroup m_right = new SpeedControllerGroup(m_frontRight, m_midRight, m_rearRight);
  *
  *   DifferentialDrive m_drive = new DifferentialDrive(m_left, m_right);
@@ -63,6 +61,7 @@ import edu.wpi.first.wpiutil.math.MathUtils;
  * <p>A differential drive robot has left and right wheels separated by an arbitrary width.
  *
  * <p>Drive base diagram:
+ *
  * <pre>
  * |_______|
  * | |   | |
@@ -83,20 +82,20 @@ import edu.wpi.first.wpiutil.math.MathUtils;
  * positive.
  *
  * <p>Inputs smaller then {@value edu.wpi.first.wpilibj.drive.RobotDriveBase#kDefaultDeadband} will
- * be set to 0, and larger values will be scaled so that the full range is still used. This
- * deadband value can be changed with {@link #setDeadband}.
+ * be set to 0, and larger values will be scaled so that the full range is still used. This deadband
+ * value can be changed with {@link #setDeadband}.
  *
- * <p>RobotDrive porting guide:
- * <br>{@link #tankDrive(double, double)} is equivalent to
- * {@link edu.wpi.first.wpilibj.RobotDrive#tankDrive(double, double)} if a deadband of 0 is used.
- * <br>{@link #arcadeDrive(double, double)} is equivalent to
- * {@link edu.wpi.first.wpilibj.RobotDrive#arcadeDrive(double, double)} if a deadband of 0 is used
- * and the the rotation input is inverted eg arcadeDrive(y, -rotation)
- * <br>{@link #curvatureDrive(double, double, boolean)} is similar in concept to
- * {@link edu.wpi.first.wpilibj.RobotDrive#drive(double, double)} with the addition of a quick turn
- * mode. However, it is not designed to give exactly the same response.
+ * <p>RobotDrive porting guide: <br>
+ * {@link #tankDrive(double, double)} is equivalent to {@link
+ * edu.wpi.first.wpilibj.RobotDrive#tankDrive(double, double)} if a deadband of 0 is used. <br>
+ * {@link #arcadeDrive(double, double)} is equivalent to {@link
+ * edu.wpi.first.wpilibj.RobotDrive#arcadeDrive(double, double)} if a deadband of 0 is used and the
+ * the rotation input is inverted eg arcadeDrive(y, -rotation) <br>
+ * {@link #curvatureDrive(double, double, boolean)} is similar in concept to {@link
+ * edu.wpi.first.wpilibj.RobotDrive#drive(double, double)} with the addition of a quick turn mode.
+ * However, it is not designed to give exactly the same response.
  */
-public class DifferentialDrive extends RobotDriveBase implements Sendable {
+public class DifferentialDrive extends RobotDriveBase implements Sendable, AutoCloseable {
   public static final double kDefaultQuickStopThreshold = 0.2;
   public static final double kDefaultQuickStopAlpha = 0.1;
 
@@ -127,11 +126,16 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
     SendableRegistry.addLW(this, "DifferentialDrive", instances);
   }
 
+  @Override
+  public void close() {
+    SendableRegistry.remove(this);
+  }
+
   /**
-   * Verifies that all motors are nonnull, throwing a NullPointerException if any of them are.
-   * The exception's error message will specify all null motors, e.g. {@code
-   * NullPointerException("leftMotor, rightMotor")}, to give as much information as possible to
-   * the programmer.
+   * Verifies that all motors are nonnull, throwing a NullPointerException if any of them are. The
+   * exception's error message will specify all null motors, e.g. {@code
+   * NullPointerException("leftMotor, rightMotor")}, to give as much information as possible to the
+   * programmer.
    *
    * @throws NullPointerException if any of the given motors are null
    */
@@ -151,12 +155,12 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
   }
 
   /**
-   * Arcade drive method for differential drive platform.
-   * The calculated values will be squared to decrease sensitivity at low speeds.
+   * Arcade drive method for differential drive platform. The calculated values will be squared to
+   * decrease sensitivity at low speeds.
    *
-   * @param xSpeed    The robot's speed along the X axis [-1.0..1.0]. Forward is positive.
+   * @param xSpeed The robot's speed along the X axis [-1.0..1.0]. Forward is positive.
    * @param zRotation The robot's rotation rate around the Z axis [-1.0..1.0]. Clockwise is
-   *                  positive.
+   *     positive.
    */
   @SuppressWarnings("ParameterName")
   public void arcadeDrive(double xSpeed, double zRotation) {
@@ -166,23 +170,23 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
   /**
    * Arcade drive method for differential drive platform.
    *
-   * @param xSpeed        The robot's speed along the X axis [-1.0..1.0]. Forward is positive.
-   * @param zRotation     The robot's rotation rate around the Z axis [-1.0..1.0]. Clockwise is
-   *                      positive.
+   * @param xSpeed The robot's speed along the X axis [-1.0..1.0]. Forward is positive.
+   * @param zRotation The robot's rotation rate around the Z axis [-1.0..1.0]. Clockwise is
+   *     positive.
    * @param squareInputs If set, decreases the input sensitivity at low speeds.
    */
   @SuppressWarnings("ParameterName")
   public void arcadeDrive(double xSpeed, double zRotation, boolean squareInputs) {
     if (!m_reported) {
-      HAL.report(tResourceType.kResourceType_RobotDrive, 2,
-                 tInstances.kRobotDrive2_DifferentialArcade);
+      HAL.report(
+          tResourceType.kResourceType_RobotDrive, tInstances.kRobotDrive2_DifferentialArcade, 2);
       m_reported = true;
     }
 
-    xSpeed = MathUtils.clamp(xSpeed, -1.0, 1.0);
+    xSpeed = MathUtil.clamp(xSpeed, -1.0, 1.0);
     xSpeed = applyDeadband(xSpeed, m_deadband);
 
-    zRotation = MathUtils.clamp(zRotation, -1.0, 1.0);
+    zRotation = MathUtil.clamp(zRotation, -1.0, 1.0);
     zRotation = applyDeadband(zRotation, m_deadband);
 
     // Square the inputs (while preserving the sign) to increase fine control
@@ -217,9 +221,9 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
       }
     }
 
-    m_leftMotor.set(MathUtils.clamp(leftMotorOutput, -1.0, 1.0) * m_maxOutput);
+    m_leftMotor.set(MathUtil.clamp(leftMotorOutput, -1.0, 1.0) * m_maxOutput);
     double maxOutput = m_maxOutput * m_rightSideInvertMultiplier;
-    m_rightMotor.set(MathUtils.clamp(rightMotorOutput, -1.0, 1.0) * maxOutput);
+    m_rightMotor.set(MathUtil.clamp(rightMotorOutput, -1.0, 1.0) * maxOutput);
 
     feed();
   }
@@ -228,28 +232,27 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
    * Curvature drive method for differential drive platform.
    *
    * <p>The rotation argument controls the curvature of the robot's path rather than its rate of
-   * heading change. This makes the robot more controllable at high speeds. Also handles the
-   * robot's quick turn functionality - "quick turn" overrides constant-curvature turning for
-   * turn-in-place maneuvers.
+   * heading change. This makes the robot more controllable at high speeds. Also handles the robot's
+   * quick turn functionality - "quick turn" overrides constant-curvature turning for turn-in-place
+   * maneuvers.
    *
-   * @param xSpeed      The robot's speed along the X axis [-1.0..1.0]. Forward is positive.
-   * @param zRotation   The robot's rotation rate around the Z axis [-1.0..1.0]. Clockwise is
-   *                    positive.
-   * @param isQuickTurn If set, overrides constant-curvature turning for
-   *                    turn-in-place maneuvers.
+   * @param xSpeed The robot's speed along the X axis [-1.0..1.0]. Forward is positive.
+   * @param zRotation The robot's rotation rate around the Z axis [-1.0..1.0]. Clockwise is
+   *     positive.
+   * @param isQuickTurn If set, overrides constant-curvature turning for turn-in-place maneuvers.
    */
   @SuppressWarnings({"ParameterName", "PMD.CyclomaticComplexity"})
   public void curvatureDrive(double xSpeed, double zRotation, boolean isQuickTurn) {
     if (!m_reported) {
-      HAL.report(tResourceType.kResourceType_RobotDrive, 2,
-                 tInstances.kRobotDrive2_DifferentialCurvature);
+      HAL.report(
+          tResourceType.kResourceType_RobotDrive, tInstances.kRobotDrive2_DifferentialCurvature, 2);
       m_reported = true;
     }
 
-    xSpeed = MathUtils.clamp(xSpeed, -1.0, 1.0);
+    xSpeed = MathUtil.clamp(xSpeed, -1.0, 1.0);
     xSpeed = applyDeadband(xSpeed, m_deadband);
 
-    zRotation = MathUtils.clamp(zRotation, -1.0, 1.0);
+    zRotation = MathUtil.clamp(zRotation, -1.0, 1.0);
     zRotation = applyDeadband(zRotation, m_deadband);
 
     double angularPower;
@@ -257,8 +260,9 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
 
     if (isQuickTurn) {
       if (Math.abs(xSpeed) < m_quickStopThreshold) {
-        m_quickStopAccumulator = (1 - m_quickStopAlpha) * m_quickStopAccumulator
-            + m_quickStopAlpha * MathUtils.clamp(zRotation, -1.0, 1.0) * 2;
+        m_quickStopAccumulator =
+            (1 - m_quickStopAlpha) * m_quickStopAccumulator
+                + m_quickStopAlpha * MathUtil.clamp(zRotation, -1.0, 1.0) * 2;
       }
       overPower = true;
       angularPower = zRotation;
@@ -309,13 +313,12 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
   }
 
   /**
-   * Tank drive method for differential drive platform.
-   * The calculated values will be squared to decrease sensitivity at low speeds.
+   * Tank drive method for differential drive platform. The calculated values will be squared to
+   * decrease sensitivity at low speeds.
    *
-   * @param leftSpeed  The robot's left side speed along the X axis [-1.0..1.0]. Forward is
-   *                   positive.
+   * @param leftSpeed The robot's left side speed along the X axis [-1.0..1.0]. Forward is positive.
    * @param rightSpeed The robot's right side speed along the X axis [-1.0..1.0]. Forward is
-   *                   positive.
+   *     positive.
    */
   public void tankDrive(double leftSpeed, double rightSpeed) {
     tankDrive(leftSpeed, rightSpeed, true);
@@ -324,23 +327,22 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
   /**
    * Tank drive method for differential drive platform.
    *
-   * @param leftSpeed     The robot left side's speed along the X axis [-1.0..1.0]. Forward is
-   *                      positive.
-   * @param rightSpeed    The robot right side's speed along the X axis [-1.0..1.0]. Forward is
-   *                      positive.
+   * @param leftSpeed The robot left side's speed along the X axis [-1.0..1.0]. Forward is positive.
+   * @param rightSpeed The robot right side's speed along the X axis [-1.0..1.0]. Forward is
+   *     positive.
    * @param squareInputs If set, decreases the input sensitivity at low speeds.
    */
   public void tankDrive(double leftSpeed, double rightSpeed, boolean squareInputs) {
     if (!m_reported) {
-      HAL.report(tResourceType.kResourceType_RobotDrive, 2,
-                 tInstances.kRobotDrive2_DifferentialTank);
+      HAL.report(
+          tResourceType.kResourceType_RobotDrive, tInstances.kRobotDrive2_DifferentialTank, 2);
       m_reported = true;
     }
 
-    leftSpeed = MathUtils.clamp(leftSpeed, -1.0, 1.0);
+    leftSpeed = MathUtil.clamp(leftSpeed, -1.0, 1.0);
     leftSpeed = applyDeadband(leftSpeed, m_deadband);
 
-    rightSpeed = MathUtils.clamp(rightSpeed, -1.0, 1.0);
+    rightSpeed = MathUtil.clamp(rightSpeed, -1.0, 1.0);
     rightSpeed = applyDeadband(rightSpeed, m_deadband);
 
     // Square the inputs (while preserving the sign) to increase fine control
@@ -367,7 +369,7 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
    * angular power request to slow the robot's rotation.
    *
    * @param threshold X speed below which quick stop accumulator will receive rotation rate values
-   *                  [0..1.0].
+   *     [0..1.0].
    */
   public void setQuickStopThreshold(double threshold) {
     m_quickStopThreshold = threshold;
@@ -380,15 +382,15 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
    * changes.
    *
    * @param alpha Low-pass filter gain [0.0..2.0]. Smaller values result in slower output changes.
-   *              Values between 1.0 and 2.0 result in output oscillation. Values below 0.0 and
-   *              above 2.0 are unstable.
+   *     Values between 1.0 and 2.0 result in output oscillation. Values below 0.0 and above 2.0 are
+   *     unstable.
    */
   public void setQuickStopAlpha(double alpha) {
     m_quickStopAlpha = alpha;
   }
 
   /**
-   * Gets if the power sent to the right side of the drivetrain is multipled by -1.
+   * Gets if the power sent to the right side of the drivetrain is multiplied by -1.
    *
    * @return true if the right side is inverted
    */
@@ -397,9 +399,9 @@ public class DifferentialDrive extends RobotDriveBase implements Sendable {
   }
 
   /**
-   * Sets if the power sent to the right side of the drivetrain should be multipled by -1.
+   * Sets if the power sent to the right side of the drivetrain should be multiplied by -1.
    *
-   * @param rightSideInverted true if right side power should be multipled by -1
+   * @param rightSideInverted true if right side power should be multiplied by -1
    */
   public void setRightSideInverted(boolean rightSideInverted) {
     m_rightSideInvertMultiplier = rightSideInverted ? -1.0 : 1.0;

@@ -1,18 +1,17 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2015-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #pragma once
 
 #include <algorithm>
 
+#include "wpi/circular_buffer.h"
+
 namespace wpi {
 
 template <class T>
-circular_buffer<T>::circular_buffer(size_t size) : m_data(size, 0) {}
+circular_buffer<T>::circular_buffer(size_t size) : m_data(size, T{}) {}
 
 /**
  * Returns number of elements in buffer
@@ -45,7 +44,7 @@ template <class T>
 T& circular_buffer<T>::back() {
   // If there are no elements in the buffer, do nothing
   if (m_length == 0) {
-    return 0;
+    return zero_val;
   }
 
   return m_data[(m_front + m_length - 1) % m_data.size()];
@@ -58,7 +57,7 @@ template <class T>
 const T& circular_buffer<T>::back() const {
   // If there are no elements in the buffer, do nothing
   if (m_length == 0) {
-    return 0;
+    return zero_val;
   }
 
   return m_data[(m_front + m_length - 1) % m_data.size()];
@@ -110,7 +109,7 @@ template <class T>
 T circular_buffer<T>::pop_front() {
   // If there are no elements in the buffer, do nothing
   if (m_length == 0) {
-    return 0;
+    return T{0};
   }
 
   T& temp = m_data[m_front];
@@ -126,7 +125,7 @@ template <class T>
 T circular_buffer<T>::pop_back() {
   // If there are no elements in the buffer, do nothing
   if (m_length == 0) {
-    return 0;
+    return T{0};
   }
 
   m_length--;
@@ -191,7 +190,7 @@ void circular_buffer<T>::resize(size_t size) {
  */
 template <class T>
 void circular_buffer<T>::reset() {
-  std::fill(m_data.begin(), m_data.end(), 0);
+  std::fill(m_data.begin(), m_data.end(), T{0});
   m_front = 0;
   m_length = 0;
 }

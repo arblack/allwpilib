@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2018-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 package edu.wpi.first.wpilibj.templates.robotbaseskeleton;
 
@@ -13,25 +10,21 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 /**
- * The VM is configured to automatically run this class. If you change the name
- * of this class or the package after creating this project, you must also
- * update the build.gradle file in the project.
+ * The VM is configured to automatically run this class. If you change the name of this class or the
+ * package after creating this project, you must also update the build.gradle file in the project.
  */
 public class Robot extends RobotBase {
-  public void robotInit() {
-  }
+  public void robotInit() {}
 
-  public void disabled() {
-  }
+  public void disabled() {}
 
-  public void autonomous() {
-  }
+  public void autonomous() {}
 
-  public void teleop() {
-  }
+  public void teleop() {}
 
-  public void test() {
-  }
+  public void test() {}
+
+  private volatile boolean m_exit;
 
   @SuppressWarnings("PMD.CyclomaticComplexity")
   @Override
@@ -41,7 +34,7 @@ public class Robot extends RobotBase {
     // Tell the DS that the robot is ready to be enabled
     HAL.observeUserProgramStarting();
 
-    while (!Thread.currentThread().isInterrupted()) {
+    while (!Thread.currentThread().isInterrupted() && !m_exit) {
       if (isDisabled()) {
         m_ds.InDisabled(true);
         disabled();
@@ -53,7 +46,7 @@ public class Robot extends RobotBase {
         m_ds.InAutonomous(true);
         autonomous();
         m_ds.InAutonomous(false);
-        while (isAutonomous() && !isDisabled()) {
+        while (isAutonomousEnabled()) {
           m_ds.waitForData();
         }
       } else if (isTest()) {
@@ -71,10 +64,15 @@ public class Robot extends RobotBase {
         m_ds.InOperatorControl(true);
         teleop();
         m_ds.InOperatorControl(false);
-        while (isOperatorControl() && !isDisabled()) {
+        while (isOperatorControlEnabled()) {
           m_ds.waitForData();
         }
       }
     }
+  }
+
+  @Override
+  public void endCompetition() {
+    m_exit = true;
   }
 }

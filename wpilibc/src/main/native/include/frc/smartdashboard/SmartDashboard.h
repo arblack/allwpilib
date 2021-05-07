@@ -1,9 +1,6 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2011-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
 #pragma once
 
@@ -11,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableValue.h>
 
 #include "frc/ErrorBase.h"
@@ -95,6 +93,16 @@ class SmartDashboard : public ErrorBase,
    * @param key the key name
    */
   static void Delete(wpi::StringRef key);
+
+  /**
+   * Returns an NT Entry mapping to the specified key
+   *
+   * This is useful if an entry is used often, or is read and then modified.
+   *
+   * @param key the key
+   * @return    the entry for the key
+   */
+  static nt::NetworkTableEntry GetEntry(wpi::StringRef key);
 
   /**
    * Maps the specified key to the specified value in this table.
@@ -424,7 +432,7 @@ class SmartDashboard : public ErrorBase,
   static void UpdateValues();
 
  private:
-  virtual ~SmartDashboard() = default;
+  ~SmartDashboard() override = default;
 
   static detail::ListenerExecutor listenerExecutor;
 };
